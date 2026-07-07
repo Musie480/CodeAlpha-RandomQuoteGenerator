@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../services/quote_service.dart';
-import '../providers/theme_provider.dart';
+import '../theme/app_theme.dart';
 
 class CategoriesScreen extends StatefulWidget {
   const CategoriesScreen({super.key});
@@ -80,92 +79,118 @@ class _CategoriesScreenState extends State<CategoriesScreen>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final categories = _categories ?? [];
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Categories'),
-        actions: [
-          IconButton(
-            icon: Icon(
-              context.watch<ThemeProvider>().isDarkMode
-                  ? Icons.light_mode_rounded
-                  : Icons.dark_mode_rounded,
-            ),
-            onPressed: () => context.read<ThemeProvider>().toggleTheme(),
-          ),
-        ],
-      ),
+      backgroundColor: Colors.transparent,
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: Text(
-                      'Choose a mood',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: colorScheme.onSurfaceVariant,
+          : SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 48, 24, 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          color: colorScheme.primary.withValues(alpha: 0.1),
+                        ),
+                        child: Text(
+                          'MOODS',
+                          style: Theme.of(context)
+                              .textTheme
+                              .labelSmall
+                              ?.copyWith(
+                                color: colorScheme.primary,
+                                letterSpacing: 2,
+                              ),
+                        ),
                       ),
                     ),
-                  ),
-                  Expanded(
-                    child: GridView.builder(
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: _gridColumns(context),
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                        childAspectRatio: _aspectRatio(context),
-                      ),
-                      itemCount: categories.length,
-                      itemBuilder: (context, index) {
-                        final cat = categories[index];
-                        final anim = CurvedAnimation(
-                          parent: _staggerController,
-                          curve: Interval(
-                            0.1 + (index * 0.07).clamp(0.0, 0.5),
-                            0.5 + (index * 0.07).clamp(0.0, 0.5),
-                            curve: Curves.easeOutCubic,
+                    Text(
+                      'Choose a\nmood',
+                      style: Theme.of(context)
+                          .textTheme
+                          .displayMedium
+                          ?.copyWith(
+                            color: colorScheme.onSurface,
+                            height: 1.1,
                           ),
-                        );
-
-                        return FadeTransition(
-                          opacity: anim,
-                          child: SlideTransition(
-                            position: Tween<Offset>(
-                              begin: const Offset(0, 0.1),
-                              end: Offset.zero,
-                            ).animate(anim),
-                            child: _CategoryCard(
-                              info: cat,
-                              onTap: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content:
-                                        Text('${cat.name} quotes coming soon'),
-                                    behavior: SnackBarBehavior.floating,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    duration: const Duration(seconds: 2),
-                                  ),
-                                );
-                              },
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Discover quotes by category',
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodyLarge
+                          ?.copyWith(
+                            color: colorScheme.onSurfaceVariant
+                                .withValues(alpha: 0.5),
+                          ),
+                    ),
+                    const SizedBox(height: 24),
+                    Expanded(
+                      child: GridView.builder(
+                        gridDelegate:
+                            SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: _gridColumns(context),
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          childAspectRatio: _aspectRatio(context),
+                        ),
+                        itemCount: categories.length,
+                        itemBuilder: (context, index) {
+                          final cat = categories[index];
+                          final anim = CurvedAnimation(
+                            parent: _staggerController,
+                            curve: Interval(
+                              0.1 + (index * 0.07).clamp(0.0, 0.5),
+                              0.5 + (index * 0.07).clamp(0.0, 0.5),
+                              curve: AppTheme.premiumCurve,
                             ),
-                          ),
-                        );
-                      },
+                          );
+
+                          return FadeTransition(
+                            opacity: anim,
+                            child: SlideTransition(
+                              position: Tween<Offset>(
+                                begin: const Offset(0, 0.12),
+                                end: Offset.zero,
+                              ).animate(anim),
+                              child: _PremiumCategoryCard(
+                                info: cat,
+                                isDark: isDark,
+                                colorScheme: colorScheme,
+                                onTap: () {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                          '${cat.name} quotes coming soon'),
+                                      behavior: SnackBarBehavior.floating,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(14),
+                                      ),
+                                      duration: const Duration(seconds: 2),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
     );
@@ -194,17 +219,24 @@ class _CategoryInfo {
   const _CategoryInfo(this.name, this.icon, this.color, this.lightColor);
 }
 
-class _CategoryCard extends StatefulWidget {
+class _PremiumCategoryCard extends StatefulWidget {
   final _CategoryInfo info;
+  final bool isDark;
+  final ColorScheme colorScheme;
   final VoidCallback onTap;
 
-  const _CategoryCard({required this.info, required this.onTap});
+  const _PremiumCategoryCard({
+    required this.info,
+    required this.isDark,
+    required this.colorScheme,
+    required this.onTap,
+  });
 
   @override
-  State<_CategoryCard> createState() => _CategoryCardState();
+  State<_PremiumCategoryCard> createState() => _PremiumCategoryCardState();
 }
 
-class _CategoryCardState extends State<_CategoryCard>
+class _PremiumCategoryCardState extends State<_PremiumCategoryCard>
     with SingleTickerProviderStateMixin {
   late AnimationController _pressController;
   late Animation<double> _pressAnim;
@@ -214,10 +246,11 @@ class _CategoryCardState extends State<_CategoryCard>
     super.initState();
     _pressController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 120),
+      duration: const Duration(milliseconds: 150),
     );
     _pressAnim = Tween<double>(begin: 1.0, end: 0.95).animate(
-      CurvedAnimation(parent: _pressController, curve: Curves.easeInOut),
+      CurvedAnimation(
+          parent: _pressController, curve: AppTheme.premiumCurve),
     );
   }
 
@@ -229,8 +262,13 @@ class _CategoryCardState extends State<_CategoryCard>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final catColor = widget.isDark
+        ? widget.info.color.withValues(alpha: 0.25)
+        : widget.info.lightColor.withValues(alpha: 0.15);
+    final borderColor = (widget.isDark
+            ? widget.info.color
+            : widget.info.lightColor)
+        .withValues(alpha: widget.isDark ? 0.2 : 0.15);
 
     return GestureDetector(
       onTapDown: (_) => _pressController.forward(),
@@ -245,50 +283,50 @@ class _CategoryCardState extends State<_CategoryCard>
           return Transform.scale(
             scale: _pressAnim.value,
             child: Container(
+              padding: const EdgeInsets.all(3),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: borderColor),
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: isDark
-                      ? [
-                          widget.info.color.withValues(alpha: 0.2),
-                          widget.info.color.withValues(alpha: 0.05),
-                        ]
-                      : [
-                          widget.info.lightColor.withValues(alpha: 0.15),
-                          widget.info.lightColor.withValues(alpha: 0.05),
-                        ],
-                ),
-                border: Border.all(
-                  color: (isDark
-                          ? widget.info.color
-                          : widget.info.lightColor)
-                      .withValues(alpha: 0.2),
+                  colors: [
+                    catColor,
+                    catColor.withValues(alpha: 0.3),
+                  ],
                 ),
               ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    widget.info.icon,
-                    size: 32,
-                    color: isDark
-                        ? widget.info.lightColor
-                        : widget.info.color,
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    widget.info.name[0].toUpperCase() +
-                        widget.info.name.substring(1),
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: theme.colorScheme.onSurface,
-                      letterSpacing: -0.2,
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(21),
+                  color: widget.isDark
+                      ? widget.colorScheme.surfaceContainerHighest
+                          .withValues(alpha: 0.2)
+                      : Colors.white.withValues(alpha: 0.5),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      widget.info.icon,
+                      size: 28,
+                      color: widget.isDark
+                          ? widget.info.lightColor
+                          : widget.info.color,
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 8),
+                    Text(
+                      widget.info.name[0].toUpperCase() +
+                          widget.info.name.substring(1),
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleMedium
+                          ?.copyWith(
+                            color: widget.colorScheme.onSurface,
+                          ),
+                    ),
+                  ],
+                ),
               ),
             ),
           );
